@@ -1,0 +1,18 @@
+{
+  "name": "tft",
+  "version": "1.0.0",
+  "description": "Getting tft data",
+  "main": "tft_data.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mittew",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "ejs": "^3.1.8",
+    "express": "^4.18.1",
+    "nedb": "^1.8.0",
+    "node-fetch": "^2.6.6"
+  }
+}

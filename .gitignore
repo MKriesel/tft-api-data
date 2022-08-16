@@ -1,0 +1,6 @@
+.env
+node_modules/
+players.db
+match.db
+database.db
+companions.json
