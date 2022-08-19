@@ -27,7 +27,11 @@ matchDB.ensureIndex({ fieldName: 'm', unique: true });
 
 const key = process.env.API_KEY;
 const id = 'Mittew';
-var pid = '7CUKw4VH1qghBNNgd0wNLCn-0j8iW4ZBPr9dTYyhoZUcv2qs2kPZtnjBWWJjy_a8hjPmOQ9ioYv_Dg';
+var pid = 'Hu6olHpRqhesbPu5e4gufJJOwX4uFxI6WsCllSBGa141fFrliIl2m1NNogaPBg7lxsP6LcmXoZQzFw';
+var pidkr =  '6kFM3UrpLKgjbTEiqEoAs9Bvfi8eScVH7fi-ir6CRJgOkpxi8bvTCH0DmQbkPZ5KFY4uvO-l2gsMEg';
+var pideu =  'q_fTYOB20cpBx-oQJB9IHVIVWQ7OpLUSIF9prdBgXkik0Z73aJvi01basCIOjv-E7MNl1z-BbBLAHA';
+// EUW1_6018093954
+//"KR_6079357724"
 var matchId = 'NA1_4398933971';
 var petid;
 async function getPetId(){
@@ -35,79 +39,124 @@ async function getPetId(){
     petid = await response.json();
 }
 
-
-
 async function getSumInfo(){
     let response;
     response = await fetch(`https://na1.api.riotgames.com/tft/summoner/v1/summoners/by-name/${id}?api_key=${key}`);
-	return response.json();
+	return response.json(); 
 }
 async function getMatchId(id){
     let response;
-    response = await fetch(`https://americas.api.riotgames.com/tft/match/v1/matches/by-puuid/${id}/ids?start=0&count=50&api_key=${key}`);
+    response = await fetch(`https://americas.api.riotgames.com/tft/match/v1/matches/by-puuid/${id}/ids?start=0&count=40&api_key=${key}`);
 	return response.json();
 }
 async function getMatch(mid){
     let response;
     response = await fetch(`https://americas.api.riotgames.com/tft/match/v1/matches/${mid}?api_key=${key}`);
+	return response.json(); 
+}
+async function getMatchIdKR(id){
+    let response;
+    response = await fetch(`https://asia.api.riotgames.com/tft/match/v1/matches/by-puuid/${id}/ids?start=0&count=40&api_key=${key}`);
 	return response.json();
-    
+}
+async function getMatchKR(mid){
+    let response;
+    response = await fetch(`https://asia.api.riotgames.com/tft/match/v1/matches/${mid}?api_key=${key}`);
+	return response.json(); 
+}
+async function getMatchIdEU(id){
+    let response;
+    response = await fetch(`https://europe.api.riotgames.com/tft/match/v1/matches/by-puuid/${id}/ids?start=0&count=40&api_key=${key}`);
+	return response.json();
+}
+async function getMatchEU(mid){
+    let response;
+    response = await fetch(`https://europe.api.riotgames.com/tft/match/v1/matches/${mid}?api_key=${key}`);
+	return response.json(); 
 }
 async function fillMatchesDB(){
     
     var mID = await getMatchId(pid);
+    var mIDk = await getMatchIdKR(pidkr);
+    var mIDe = await getMatchIdEU(pideu);
     for(i = 0; i < mID.length; i++){
         matchDB.insert({m: mID[i]});
+        matchDB.insert({m: mIDk[i]});
+        matchDB.insert({m: mIDe[i]});
     }
     
-    var match = await getMatch(mID[40]);
+    var mRan = Math.floor(Math.random() * 35) + 1;
+    console.log(mRan);
+    var match = await getMatch(mID[mRan]);
+    var matchk = await getMatchKR(mIDk[mRan]);
+    var matche = await getMatchEU(mIDe[mRan]);
     //console.log(match);
-    var npid = match.metadata.participants[3];
-    console.log("npid ",npid);
+
+    var npid = match.metadata.participants[4];
+    var npidk = matchk.metadata.participants[4];
+    var npide = matche.metadata.participants[4];
+    //console.log("npid ",npid);
     if (npid != pid){
-        pid = match.metadata.participants[3];
-        console.log("ASRGWEIOWENWEGNpid ",pid);
+        pid = match.metadata.participants[4];
+        //console.log("ASRGWEIOWENWEGNpid ",pid);
     }
     else{
-        pid = match.metadata.participants[1];
-        console.log("pid ",pid);
+        pid = match.metadata.participants[3];
+        //console.log("pid ",pid);
+    }
+    if (npidk != pidkr){
+        pidkr = matchk.metadata.participants[4];
+        //console.log("ASRGWEIOWENWEGNpid ",pidkr);
+    }
+    else{
+        pidkr = matchk.metadata.participants[3];
+        //console.log("pid ",pidkr);
+    }
+    if (npide != pideu){
+        pideu = matche.metadata.participants[4];
+        //console.log("ASRGWEIOWENWEGNpid ",pideu);
+    }
+    else{
+        pideu = matche.metadata.participants[3];
+        //console.log("pid ", pideu);
     }
 }
 
 async function fillPlayerDB(matchA){
-    for(j = 201; j < matchA.length; j++){//start j at where last ended **200
+    var match;
+    var players;
+    var companions = [];
+    for(j = 30008; j < matchA.length; j++){//start j at where last ended **25661
         console.log(matchA[j].m);
         console.log(j);
-        var match = await getMatch(matchA[j].m);
-        var players = match.info.participants;
-
-        var companions = [];
-        
-        companions.push( {
-            match: match.metadata.match_id,
-            spec: players[i].companion.species,
-            cont: players[i].companion.content_ID,
-            skin: players[i].companion.skin_ID,
-            plac: players[i].placement,
-            gold: players[i].gold_left,
-            players_elim: players[i].players_eliminated,
-            dmg: players[i].total_damage_to_players
-        });
-        
+        if(matchA[j].m.includes("NA1"))
+            match = await getMatch(matchA[j].m);
+        else if(matchA[j].m.includes("KR"))
+            match = await getMatchKR(matchA[j].m);
+        else if(matchA[j].m.includes("EUW1"))
+            match = await getMatchEU(matchA[j].m);
+        players = match.info.participants;
+        for(i = 0; i < 8; i++){
+            companions.push( {
+                match: match.metadata.match_id,
+                spec: players[i].companion.species,
+                cont: players[i].companion.content_ID,
+                skin: players[i].companion.skin_ID,
+                plac: players[i].placement,
+                gold: players[i].gold_left,
+                players_elim: players[i].players_eliminated,
+                dmg: players[i].total_damage_to_players,
+                puuid: players[i].puuid
+            });
+        }
         
         playersDB.insert(companions);
-        
-        await new Promise(r => setTimeout(r, 1300));//sleep
+        companions = [];
+        await new Promise(r => setTimeout(r, 900));//sleep
     }
+    console.log("complete")
+    
 }
-
-function filterIt(arr, searchKey) {
-    return arr.filter(function(obj) {
-      return Object.keys(obj).some(function(key) {
-        return obj[key].includes(searchKey);
-      })
-    });
-  }
 
 function processData(a){
     //average placement for pet
@@ -124,7 +173,7 @@ function processData(a){
     var data = []; //data by content id
     var specData = []; //data by species type
 
-    for(i = 0; i < 60; i++){
+    for(i = 0; i < a.length; i++){
         var _ind = data.findIndex(function(post, index){
             return post.cont == a[i].cont
         });
@@ -218,29 +267,30 @@ function processData(a){
     var avgDmg; 
 
     //cont id data
-    printAvgPlac(data);
-    printAvgEif(data);
-    printEif(data);
-    printAvgElim(data);
-    printAvgGold(data);
-    printPopSpec(data);
-    printAvgDmg(data);
+    //printAvgPlac(data);
+    //printAvgEif(data);
+    //printEif(data);
+    //printAvgElim(data);
+    //printAvgGold(data);
+    //printPopSpec(data);
+    //printAvgDmg(data);
     
     
     //spec data
-    printAvgPlac(specData);
-    printAvgEif(specData);
-    printEif(specData);
-    printAvgElim(specData);
-    printAvgGold(specData);
+    //printAvgPlac(specData);
+    //printAvgEif(specData);
+    //printEif(specData);
+    //printAvgElim(specData);
+    //printAvgGold(specData);
     printPopSpec(specData);
-    printAvgDmg(specData);
+    //printAvgDmg(specData);
 
     //yas data
+    /*
     var _yas = data.findIndex(function(post, index){
         return post.cont == "b890d4df-181a-43da-861d-99a72afbc602"
     });
-    console.log("yas data /n",data[_yas]);
+    console.log("yas data \n",data[_yas]);*/
 }
     
 
@@ -250,13 +300,13 @@ function printAvgPlac(array){
     //top 5
     array.sort((a, b) => a.avgPlac/a.games - b.avgPlac/b.games);
     for(i = 0; i < 5; i++){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].avgPlac/array[i].games);
     }
     console.log("bot");
     //bottom 5 
     //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
     for(i = array.length-1; i >= array.length-5; i--){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].avgPlac/array[i].games);
     }
 }
 function printAvgEif(array){
@@ -264,13 +314,13 @@ function printAvgEif(array){
     //top 5
     array.sort((a, b) => a.eif/a.games - b.eif/b.games);
     for(i = 0; i < 5; i++){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].eif/array[i].games);
     } 
     console.log("bot");
     //bottom 5
     //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
     for(i = array.length-1; i >= array.length-5; i--){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].eif/array[i].games);
     }
 }
 function printEif(array){
@@ -292,13 +342,13 @@ function printAvgElim(array){
     //top 5 
     array.sort((a, b) => a.elim/a.games - b.elim/b.games);
     for(i = 0; i < 5; i++){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].elim/array[i].games);
     }
     console.log("bot");
     //bottom 5 
     //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
     for(i = array.length-1; i >= array.length-5; i--){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].elim/array[i].games);
     }
 }
 function printPopSpec(array){
@@ -320,13 +370,13 @@ function printAvgDmg(array){
     //top 5 
     array.sort((a, b) => a.dmg/a.games - b.dmg/b.games);
     for(i = 0; i < 5; i++){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].dmg/array[i].games);
     }
     console.log("bot");
     //bottom 5
     //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
     for(i = array.length-1; i >= array.length-5; i--){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].dmg/array[i].games);
     }
 }
 function printAvgGold(array){
@@ -334,13 +384,13 @@ function printAvgGold(array){
     //top 5
     array.sort((a, b) => a.gold/a.games - b.gold/b.games);
     for(i = 0; i < 5; i++){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].gold/array[i].games);
     }
     console.log("bot");
     //bottom 5
     //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
     for(i = array.length-1; i >= array.length-5; i--){
-        console.log(array[i]);
+        console.log(array[i], "   ", array[i].gold/array[i].games);
     }
 }
 
@@ -352,26 +402,20 @@ function printAvgGold(array){
 async function main(){
     //await getPetId();
     playersDB.find({}, function(err,docs){processData(docs)});
-    
 
-    //processD ata();
     /*fill player DataBase*/
-
     //matchDB.find({}, function(err,docs){fillPlayerDB(docs);});
 
     /* fill matches database*/
     /*
     setInterval(async () => {
         await fillMatchesDB() 
-    }, 6000);
+    }, 2000);
     */
 
 }
 main();
-//
 
-    //console.log(specData);
-    
 /*
     var _in = petid.findIndex(function(post, index){
         if (post.contentId == "0e251d36-d86e-4c58-9b7f-bcee2376a408")
@@ -382,10 +426,4 @@ main();
     app.get('/', (req, res) => {
         res.render('index', { data: data })
       });
-    /*
-    var _in = petid.findIndex(function(post, index){
-        if (post.contentId == "0e251d36-d86e-4c58-9b7f-bcee2376a408")
-            return index;
-    });*/
-    /*avg data*/
-    //console.log(data);
+      */
