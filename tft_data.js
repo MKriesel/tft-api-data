@@ -2,6 +2,12 @@
 //https://raw.communitydragon.org/latest/game/assets/loot/companions/
 //https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/companions.json\
 //https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/loadouts/companions/
+const fetch = require('node-fetch');
+const Datastore = require('nedb');
+require('dotenv').config();
+
+const xlsx = require('xlsx');
+const path = require('path');
 
 const express = require('express')
 const app = express()
@@ -13,11 +19,6 @@ app.set('views', './views');
 app.set('view engine', 'ejs');
 
 //app.listen(port, () => console.info(`App listening on port ${port}`))
-
-
-const fetch = require('node-fetch');
-const Datastore = require('nedb');
-require('dotenv').config();
 
 const playersDB = new Datastore('players.db');
 playersDB.loadDatabase();
@@ -186,31 +187,36 @@ function processData(a){
             if(a[i].plac == '8'){
                 data[_ind].eif ++;
             }
+            if(a[i].plac <= 4){
+                data[_ind].top ++;
+            }
+            if(a[i].plac == 1){
+                data[_ind].first ++;
+            }
             data[_ind].games ++;
         }
         else{
         //edit values
         //else //push
+            data.push( {
+                cont: a[i].cont,
+                avgPlac: a[i].plac,
+                gold: a[i].gold,
+                elim: a[i].players_elim,
+                dmg: a[i].dmg,
+                eif: 0,
+                top: 0,
+                first: 0,
+                games: 1
+            });
             if(a[i].plac == 8){
-                data.push( {
-                    cont: a[i].cont,
-                    avgPlac: a[i].plac,
-                    gold: a[i].gold,
-                    elim: a[i].players_elim,
-                    dmg: a[i].dmg,
-                    eif: 1,
-                    games: 1
-                });
-            } else {
-                data.push( {
-                    cont: a[i].cont,
-                    avgPlac: a[i].plac,
-                    gold: a[i].gold,
-                    elim: a[i].players_elim,
-                    dmg: a[i].dmg,
-                    eif: 0,
-                    games: 1
-                });
+                data[data.length-1].eif ++;
+            } 
+            if(a[i].plac <= 4){
+                data[data.length-1].top ++;
+            }
+            if(a[i].plac == 1){
+                data[data.length-1].first ++;
             }
         } 
         
@@ -226,46 +232,106 @@ function processData(a){
             if(a[i].plac == 8){
                 specData[_indSpec].eif ++;
             }
+            if(a[i].plac <= 4){
+                specData[_indSpec].top ++;
+            }
+            if(a[i].plac == 1){
+                specData[_indSpec].first ++;
+            }
             specData[_indSpec].games ++;
         }
         else{
         //edit values
         //else //push
+            specData.push( {
+                specID: a[i].spec,
+                avgPlac: a[i].plac,
+                gold: a[i].gold,
+                elim: a[i].players_elim,
+                dmg: a[i].dmg,
+                eif: 0,
+                top: 0,
+                first: 0,
+                games: 1
+            });
+            
             if(a[i].plac == 8){
-                specData.push( {
-                    specID: a[i].spec,
-                    avgPlac: a[i].plac,
-                    gold: a[i].gold,
-                    elim: a[i].players_elim,
-                    dmg: a[i].dmg,
-                    eif: 1,
-                    games: 1
-                });
-            } else {
-                specData.push( {
-                    specID: a[i].spec,
-                    avgPlac: a[i].plac,
-                    gold: a[i].gold,
-                    elim: a[i].players_elim,
-                    dmg: a[i].dmg,
-                    eif: 0,
-                    games: 1
-                });
+                specData[specData.length-1].eif ++;
+            } 
+            if(a[i].plac <= 4){
+                specData[specData.length-1].top ++;
+            }
+            if(a[i].plac == 1){
+                specData[specData.length-1].first ++;
             }
         } 
         
     }
 
     
-    /*  top 5 */
+    /*  top 5 
     var avgPlac; 
     var eif;    
     var avgElim;
     var popPet;
     var popSpec; 
     var avgGold;
-    var avgDmg; 
+    var avgDmg; */
+    var xls = [];
+    for(i = 0; i < specData.length; i++){
+        xls.push({
+            specID: specData[i].specID,
+            avgPlac: specData[i].avgPlac/specData[i].games,  
+            avgElim: specData[i].elim/specData[i].games,          
+            avgGold: specData[i].gold/specData[i].games,
+            avgDmg: specData[i].dmg/specData[i].games,
+            avgTop: specData[i].top/specData[i].games,
+            avgFirst: specData[i].first/specData[i].games,
+            avgEif: specData[i].eif/specData[i].games,
+            games: specData[i].games
+        });
+    }
+    var _yas = data.findIndex(function(post, index){
+        return post.cont == "b890d4df-181a-43da-861d-99a72afbc602"
+    });
+    xls.push({
+        specID: data[_yas].cont,
+        avgPlac: data[_yas].avgPlac/data[_yas].games,  
+        avgElim: data[_yas].elim/data[_yas].games,          
+        avgGold: data[_yas].gold/data[_yas].games,
+        avgDmg: data[_yas].dmg/data[_yas].games,
+        avgTop: data[_yas].top/data[_yas].games,
+        avgFirst: data[_yas].first/data[_yas].games,
+        avgEif: data[_yas].eif/data[_yas].games,
+        games: data[_yas].games
+    });
+    console.log(xls[5])
 
+const workSheetColumnName = ["specID", "avgPlac","avgElim","avgGold", "avgDmg","avgTop","avgFirst", "avgEif","games"]
+
+const workSheetName = 'Species';
+const filePath = 'tftData.xlsx';
+
+const exportExcel = (data, workSheetColumnNames, workSheetName, filePath) => {
+    const workBook = xlsx.utils.book_new();
+    const workSheetData = [
+        workSheetColumnNames,
+        ... data
+    ];
+    const workSheet = xlsx.utils.aoa_to_sheet(workSheetData);
+    xlsx.utils.book_append_sheet(workBook, workSheet, workSheetName);
+    xlsx.writeFile(workBook, path.resolve(filePath));
+}
+
+const exportUsersToExcel = (xsls, workSheetColumnNames, workSheetName, filePath) => {
+    const data = xsls.map(xls => {
+        return [xls.specID, xls.avgPlac, xls.avgElim, xls.avgGold, xls.avgDmg, xls.avgTop, xls.avgFirst, xls.avgEif, xls.games];
+    });
+    exportExcel(data, workSheetColumnNames, workSheetName, filePath);
+}
+
+module.exports = exportUsersToExcel;
+exportUsersToExcel(xls, workSheetColumnName, workSheetName, filePath);
     //cont id data
     //printAvgPlac(data);
     //printAvgEif(data);
@@ -282,8 +348,10 @@ function processData(a){
     //printEif(specData);
     //printAvgElim(specData);
     //printAvgGold(specData);
-    printPopSpec(specData);
+    //printPopSpec(specData);
     //printAvgDmg(specData);
+    //printAvgTop(specData);
+    //printAvgFirst(specData);
 
     //yas data
     /*
@@ -293,6 +361,13 @@ function processData(a){
     console.log("yas data \n",data[_yas]);*/
 }
     
+//print by id
+function printSpec(array, specID){
+    var _ind = array.findIndex(function(post, index){
+        return post.specID == specID
+    });
+    console.log(array[_ind]);
+}
 
 /*top&bot 5 for data*/
 function printAvgPlac(array){
@@ -393,7 +468,34 @@ function printAvgGold(array){
         console.log(array[i], "   ", array[i].gold/array[i].games);
     }
 }
-
+function printAvgTop(array){
+    console.log("********* AVG TOP *********");
+    //top 5
+    array.sort((a, b) => a.top/a.games - b.top/b.games);
+    for(i = 0; i < 5; i++){
+        console.log(array[i], "   ", array[i].top/array[i].games);
+    }
+    console.log("bot");
+    //bottom 5
+    //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
+    for(i = array.length-1; i >= array.length-5; i--){
+        console.log(array[i], "   ", array[i].top/array[i].games);
+    }
+}
+function printAvgFirst(array){
+    console.log("********* AVG FIRST *********");
+    //top 5
+    array.sort((a, b) => a.first/a.games - b.first/b.games);
+    for(i = 0; i < 5; i++){
+        console.log(array[i], "   ", array[i].first/array[i].games);
+    }
+    console.log("bot");
+    //bottom 5
+    //specData.sort((b, a) => a.avgPlac/a.games - b.avgPlac/b.games);
+    for(i = array.length-1; i >= array.length-5; i--){
+        console.log(array[i], "   ", array[i].first/array[i].games);
+    }
+}
 
 
 
